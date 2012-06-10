@@ -13,7 +13,15 @@ class MoviesController < ApplicationController
     elsif order == "release_date"
       @release_date_header_class = "hilite"
     end
-    @movies = Movie.all :order => order
+    
+    @ratings_map = params[:ratings]
+    ratings = @ratings_map.keys unless @ratings_map.nil?
+    
+    @all_ratings = {}
+    Movie.get_ratings.each{|r| @all_ratings[r] = (!ratings.nil? and ratings.include?(r))}
+    
+    conditions = {:rating => ratings} unless ratings.nil?
+    @movies = Movie.all(:conditions => conditions, :order => order)
   end
 
   def new
