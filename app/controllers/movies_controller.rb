@@ -7,21 +7,44 @@ class MoviesController < ApplicationController
   end
 
   def index
+    
+    redirect = false
+    
     order = params[:order]
-    if order == "title"
-      @title_header_class = "hilite"
-    elsif order == "release_date"
-      @release_date_header_class = "hilite"
+    ratings = params[:ratings]
+    
+    if order.nil? and !session[:order].nil?
+      order = session[:order]
+      redirect = true
     end
     
-    @ratings_map = params[:ratings]
-    ratings = @ratings_map.keys unless @ratings_map.nil?
+    if ratings.nil? and !session[:ratings].nil?
+      ratings = session[:ratings]
+      redirect = true
+    end
     
-    @all_ratings = {}
-    Movie.get_ratings.each{|r| @all_ratings[r] = (!ratings.nil? and ratings.include?(r))}
-    
-    conditions = {:rating => ratings} unless ratings.nil?
-    @movies = Movie.all(:conditions => conditions, :order => order)
+    if redirect
+      flash.keep
+      redirect_to movies_path(:order => order, :ratings => ratings)
+    else
+      session[:order] = order
+      session[:ratings] = ratings
+      
+      if order == "title"
+        @title_header_class = "hilite"
+      elsif order == "release_date"
+        @release_date_header_class = "hilite"
+      end
+      
+      @ratings = ratings
+      ratings_keys = @ratings.keys unless @ratings.nil?
+      
+      @all_ratings = {}
+      Movie.get_ratings.each{|r| @all_ratings[r] = (!ratings_keys.nil? and ratings_keys.include?(r))}
+      
+      conditions = {:rating => ratings_keys} unless ratings_keys.nil?
+      @movies = Movie.all(:conditions => conditions, :order => order)
+    end
   end
 
   def new
